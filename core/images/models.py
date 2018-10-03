@@ -67,3 +67,31 @@ class Like(TimeStampedModel):
         return "User: {} - Image Caption: {}".format(
             self.creator.owner.username, self.image.dish
         )
+
+
+class Notification(TimeStampedModel):
+    LIKE = "L"
+    COMMENT = "C"
+    FOLLOW = "F"
+
+    TYPE_CHOICES = ((LIKE, "Like"), (COMMENT, "Comment"), (FOLLOW, "Follow"))
+
+    creator = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="creator_notifications"
+    )
+    to = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="to_notifications"
+    )
+    notification_type = models.CharField(max_length=1, choices=TYPE_CHOICES)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.TextField(null=True, blank=True)
+
+    @property
+    def natural_time(self):
+        return naturaltime(self.created_at)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return "From: {} - To: {}".format(self.creator, self.to)

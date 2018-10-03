@@ -13,8 +13,9 @@ markdown = "*"
 django-filter = "*"
 djangorestframework-jwt = "*"
 django-taggit = "*"
-imagekit = "*"
 django-taggit-serializer = "*"
+django-imagekit = "*"
+pillow = "*"
 
 [dev-packages]
 ipdb = "*"

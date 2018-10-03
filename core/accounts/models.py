@@ -7,14 +7,15 @@ from core.abstract_models import TimeStampedModel
 
 class Profile(TimeStampedModel):
     """ Profile Model """
-    MALE = 'M'
-    FEMALE = 'F'
+
+    MALE = "M"
+    FEMALE = "F"
     NOT_SPECIFIED = "N"
 
     GENDER_CHOICES = {
-        (MALE, 'Male'),
-        (FEMALE, 'Female'),
-        (NOT_SPECIFIED, 'Not specified'),
+        (MALE, "Male"),
+        (FEMALE, "Female"),
+        (NOT_SPECIFIED, "Not specified"),
     }
 
     owner = models.OneToOneField(User, on_delete=models.PROTECT)
@@ -22,9 +23,13 @@ class Profile(TimeStampedModel):
     website = models.URLField(null=True)
     bio = models.TextField(null=True)
     phone = models.CharField(max_length=140, null=True)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default=NOT_SPECIFIED)
+    gender = models.CharField(
+        max_length=1, choices=GENDER_CHOICES, default=NOT_SPECIFIED
+    )
     followers = models.ManyToManyField("self", symmetrical=False, blank=True)
-    following = models.ManyToManyField("self", symmetrical=False, blank=True, related_name="profiles")
+    following = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, related_name="profiles"
+    )
 
     def __str__(self):
         return self.owner.username

@@ -46,11 +46,14 @@ INSTALLED_APPS = [
 ]
 
 LOCAL_APPS = [
-    "core.api"
+    "core.api",
+    "core.images",
+    "core.accounts"
 ]
 
 THIRD_PARTY_APPS = [
-    "rest_framework"
+    "rest_framework",
+    "taggit"
 ]
 
 INSTALLED_APPS += LOCAL_APPS + THIRD_PARTY_APPS
