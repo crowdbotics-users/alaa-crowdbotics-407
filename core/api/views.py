@@ -20,7 +20,7 @@ class SignupViewSet(ModelViewSet):
 
 class NotificationsView(APIView):
     def get(self, request, format=None):
-        user = request.user
+        user = request.user.profile
         notifications = Notification.objects.filter(to=user)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
@@ -43,7 +43,6 @@ class InstagramLogin(SocialLoginView):
 
 class ExploreUsers(APIView):
     """ returns the 5 users which posted images recently """
-
     def get(self, request, format=None):
         explore_list = []
         last_five_images = Image.objects.all()[:10]
@@ -53,7 +52,6 @@ class ExploreUsers(APIView):
                 explore_list.append(image.creator)
 
         serializer = ListUserSerializer(explore_list[:5], many=True, context={"request": request})
-
         return Response(data=serializer.data, status=status.HTTP_200_OK)
 
 
