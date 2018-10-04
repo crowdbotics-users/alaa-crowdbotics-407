@@ -16,6 +16,8 @@ django-taggit = "*"
 django-taggit-serializer = "*"
 django-imagekit = "*"
 pillow = "*"
+django-rest-auth = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 ipdb = "*"

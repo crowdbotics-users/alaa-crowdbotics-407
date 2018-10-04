@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from taggit_serializer.serializers import TagListSerializerField, TaggitSerializer
 from core.accounts.models import Profile
-from core.images.models import Image, Comment, Like
+from core.images.models import Image, Comment, Like, Notification
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -30,7 +30,6 @@ class SignupSerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
     post_count = serializers.ReadOnlyField()
     followers_count = serializers.ReadOnlyField()
     following_count = serializers.ReadOnlyField()
@@ -54,6 +53,28 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if 'request' in self.context:
             request = self.context['request']
             return user.id == request.user.id
+
+
+class ListUserSerializer(serializers.ModelSerializer):
+
+    following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = (
+            'id',
+            'profile_image',
+            'username',
+            'name',
+            'following',
+            'followers_count',
+            'following_count'
+        )
+
+    def get_following(self, obj):
+        if 'request' in self.context:
+            request = self.context['request']
+            return obj in request.user.following.all()
 
 
 class SmallImageSerializer(serializers.ModelSerializer):
@@ -87,7 +108,6 @@ class FeedUserSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-
     creator = FeedUserSerializer(read_only=True)
     is_self = serializers.SerializerMethodField()
 
@@ -147,3 +167,22 @@ class InputImageSerializer(serializers.ModelSerializer):
             "restaurant",
             "tags"
         )
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    creator = UserProfileSerializer()
+    image = SmallImageSerializer()
+
+    class Meta:
+        model = Notification
+        fields = (
+            'id',
+            'creator',
+            'image',
+            'comment',
+            'notification_type',
+            'to',
+            'updated_at',
+            'natural_time'
+        )
+

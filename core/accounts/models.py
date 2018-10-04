@@ -38,6 +38,10 @@ class Profile(TimeStampedModel):
     def name(self):
         return f"{self.owner.first_name} {self.owner.last_name}"
 
+    @property
+    def username(self):
+        return self.owner.username
+
     # @property
     # def post_count(self):
     #     return self.images.all().count()

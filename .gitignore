@@ -284,10 +284,7 @@ pyvenv.cfg
 pip-selfcheck.json
 
 
-
-
-foodtalk/media/
-
+/media/
 
 
 # Elastic Beanstalk Files
