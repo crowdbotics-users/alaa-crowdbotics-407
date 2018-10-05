@@ -1,4 +1,7 @@
+import phonenumbers
 from django.contrib.auth.models import User
+from django.db import transaction
+from phonenumbers import NumberParseException
 from rest_framework import serializers
 from taggit_serializer.serializers import TagListSerializerField, TaggitSerializer
 from core.accounts.models import Profile
@@ -6,26 +9,59 @@ from core.images.models import Image, Comment, Like, Notification
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(write_only=True)
+    country_code = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password')
+        fields = (
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "password",
+            "phone",
+            "country_code",
+        )
         extra_kwargs = {
-            'password': {
-                'write_only': True,
-                'style': {
-                    'input_type': 'password'
-                }
-            },
-            'email': {
-                'required': True
-            }
+            "password": {"write_only": True, "style": {"input_type": "password"}},
+            "email": {"required": True},
+            "username": {"required": True},
         }
 
+    def validate_country_code(self, country_code):
+        if not country_code.startswith("+"):
+            country_code = "+" + country_code
+        return country_code
+
+    def validate_phone(self, phone_number):
+        full_number = self.initial_data["country_code"] + phone_number
+        try:
+            full_number = phonenumbers.parse(full_number, None)
+            if not phonenumbers.is_valid_number(full_number):
+                raise serializers.ValidationError("phone_number", "Invalid phone number")
+        except NumberParseException as e:
+            raise serializers.ValidationError("phone_number", e)
+        return phone_number
+
+    def _create_user_profile(self, user, profile_data):
+        profile = Profile.create_profile(user=user)
+        profile.country_code = profile_data["country_code"]
+        profile.phone = profile_data["phone"]
+        profile.save()
+
+    @transaction.atomic
     def create(self, validated_data):
-        password = validated_data.pop('password')
+        profile_data = dict(
+            country_code=validated_data.pop("country_code"), phone=validated_data.pop("phone")
+        )
+        password = validated_data.pop("password")
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+
+        self._create_user_profile(user, profile_data)
         return user
 
 
@@ -38,47 +74,45 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = (
-            'id',
-            'user__username',
-            'name',
-            'bio',
-            'website',
-            'post_count',
-            'followers_count',
-            'following_count',
-            'is_self',
+            "id",
+            "username",
+            "name",
+            "bio",
+            "website",
+            "post_count",
+            "followers_count",
+            "following_count",
+            "is_self",
         )
 
-    def get_is_self(self, user):
-        if 'request' in self.context:
-            request = self.context['request']
-            return user.id == request.user.id
+    def get_is_self(self, profile):
+        if "request" in self.context:
+            request = self.context["request"]
+            return profile.owner.id == request.user.id
 
 
 class ListUserSerializer(serializers.ModelSerializer):
-
     following = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = (
-            'id',
-            'profile_image',
-            'username',
-            'name',
-            'following',
-            'followers_count',
-            'following_count'
+            "id",
+            "profile_image",
+            "username",
+            "name",
+            "following",
+            "followers_count",
+            "following_count",
         )
 
     def get_following(self, obj):
-        if 'request' in self.context:
-            request = self.context['request']
+        if "request" in self.context:
+            request = self.context["request"]
             return obj in request.user.following.all()
 
 
 class SmallImageSerializer(serializers.ModelSerializer):
-
     """ Used for the notifications """
 
     class Meta:
@@ -153,7 +187,9 @@ class ImageSerializer(TaggitSerializer, serializers.ModelSerializer):
     def get_is_liked(self, obj):
         if "request" in self.context:
             request = self.context["request"]
-            return Like.objects.filter(creator__id=request.user.id, image__id=obj.id).exists()
+            return Like.objects.filter(
+                creator__id=request.user.profile.id, image__id=obj.id
+            ).exists()
 
 
 class InputImageSerializer(serializers.ModelSerializer):
@@ -161,12 +197,7 @@ class InputImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = (
-            "file",
-            "dish",
-            "restaurant",
-            "tags"
-        )
+        fields = ("file", "dish", "restaurant", "tags")
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -176,13 +207,12 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = (
-            'id',
-            'creator',
-            'image',
-            'comment',
-            'notification_type',
-            'to',
-            'updated_at',
-            'natural_time'
+            "id",
+            "creator",
+            "image",
+            "comment",
+            "notification_type",
+            "to",
+            "updated_at",
+            "natural_time",
         )
-

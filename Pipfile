@@ -18,6 +18,8 @@ django-imagekit = "*"
 pillow = "*"
 django-rest-auth = "*"
 django-cors-headers = "*"
+authy = "*"
+phonenumbers = "*"
 
 [dev-packages]
 ipdb = "*"

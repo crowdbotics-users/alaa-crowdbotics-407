@@ -12,20 +12,16 @@ class Profile(TimeStampedModel):
     FEMALE = "F"
     NOT_SPECIFIED = "N"
 
-    GENDER_CHOICES = {
-        (MALE, "Male"),
-        (FEMALE, "Female"),
-        (NOT_SPECIFIED, "Not specified"),
-    }
+    GENDER_CHOICES = {(MALE, "Male"), (FEMALE, "Female"), (NOT_SPECIFIED, "Not specified")}
 
     owner = models.OneToOneField(User, on_delete=models.PROTECT)
     profile_image = models.ImageField(null=True)
     website = models.URLField(null=True)
     bio = models.TextField(null=True)
     phone = models.CharField(max_length=140, null=True)
-    gender = models.CharField(
-        max_length=1, choices=GENDER_CHOICES, default=NOT_SPECIFIED
-    )
+    country_code = models.CharField(max_length=5, null=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default=NOT_SPECIFIED)
+    verified = models.BooleanField(default=False)
     followers = models.ManyToManyField("self", symmetrical=False, blank=True)
     following = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="profiles"
@@ -41,6 +37,11 @@ class Profile(TimeStampedModel):
     @property
     def username(self):
         return self.owner.username
+
+    @classmethod
+    def create_profile(cls, user):
+        profile = cls.objects.create(owner=user)
+        return profile
 
     # @property
     # def post_count(self):

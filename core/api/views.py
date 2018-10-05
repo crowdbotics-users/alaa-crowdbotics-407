@@ -2,18 +2,27 @@
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from rest_auth.registration.views import SocialLoginView
-from rest_framework import status
+from rest_framework import status, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from core.accounts.models import Profile
-from core.api.serializers import SignupSerializer, NotificationSerializer, ListUserSerializer, UserProfileSerializer, \
-    ImageSerializer, InputImageSerializer, CommentSerializer
+from core.api.permissions import IsOwner
+from core.api.serializers import (
+    SignupSerializer,
+    NotificationSerializer,
+    ListUserSerializer,
+    UserProfileSerializer,
+    ImageSerializer,
+    InputImageSerializer,
+    CommentSerializer,
+)
 from core.images.models import Notification, Image, Like, Comment
 
 
 class SignupViewSet(ModelViewSet):
+    permission_classes = [permissions.AllowAny]
     serializer_class = SignupSerializer
     http_method_names = ["post"]
 
@@ -43,6 +52,7 @@ class InstagramLogin(SocialLoginView):
 
 class ExploreUsers(APIView):
     """ returns the 5 users which posted images recently """
+
     def get(self, request, format=None):
         explore_list = []
         last_five_images = Image.objects.all()[:10]
@@ -81,41 +91,19 @@ class UnfollowUser(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
 
-class UserProfile(APIView):
-    def get_user(self, username):
-        try:
-            found_user = Profile.objects.get(owner__username=username)
-            return found_user
-        except Profile.DoesNotExist:
-            return None
+class UserProfile(viewsets.ModelViewSet):
+    permission_classes = [IsOwner]
+    serializer_class = UserProfileSerializer
+    queryset = Profile.objects.all()
+    lookup_field = "owner__username"
 
-    def get(self, request, username, format=None):
-        found_user = self.get_user(username)
-        if found_user is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        serializer = UserProfileSerializer(found_user, context={"request": request})
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request, username, format=None):
-        found_user = self.get_user(username)
-        user = request.user
-        if found_user is None:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        elif found_user.username != user.username:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            serializer = UserProfileSerializer(found_user, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(data=serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(owner=self.request.user)
 
 
 class UserFollowers(APIView):
     def get(self, request, username, format=None):
-
         try:
             found_user = Profile.objects.get(owner__username=username)
         except Profile.DoesNotExist:
@@ -227,6 +215,7 @@ class UnlikeImage(GenericImageView):
 
 class CommentOnImage(GenericImageView):
     """ post a comment """
+
     def post(self, request, image_id, format=None):
         user = request.user.profile
         found_image = self._get_object(image_id)
@@ -243,6 +232,7 @@ class CommentOnImage(GenericImageView):
 
 class CommentView(APIView):
     """ delete a comment """
+
     def delete(self, request, comment_id, format=None):
         user = request.user.profile
         try:
@@ -255,11 +245,14 @@ class CommentView(APIView):
 
 class ModerateComments(APIView):
     """ delete a comment on current user's images """
+
     def delete(self, request, image_id, comment_id, format=None):
         user = request.user.profile
 
         try:
-            comment_to_delete = Comment.objects.get(id=comment_id, image__id=image_id, image__creator=user)
+            comment_to_delete = Comment.objects.get(
+                id=comment_id, image__id=image_id, image__creator=user
+            )
             comment_to_delete.delete()
         except Comment.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
@@ -268,6 +261,7 @@ class ModerateComments(APIView):
 
 class SearchByHashtag(APIView):
     """ search for a hastag """
+
     def get(self, request, format=None):
         hashtags = request.query_params.get("hashtags", None)
         if hashtags is not None:
