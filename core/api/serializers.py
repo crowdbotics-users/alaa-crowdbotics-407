@@ -82,6 +82,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "post_count",
             "followers_count",
             "following_count",
+            "verified",
             "is_self",
         )
 
