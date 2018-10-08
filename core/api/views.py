@@ -98,21 +98,27 @@ class UserProfile(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     lookup_field = "owner__username"
 
-    @action(methods=['put'], detail=True, permission_classes=[IsOwnerOrReadOnly], url_path='verify', url_name='verify_number')
+    @action(
+        methods=["put"],
+        detail=True,
+        permission_classes=[IsOwnerOrReadOnly],
+        url_path="verify",
+        url_name="verify_number",
+    )
     def confirm_phone(self, request, owner__username=None):
         """
         Verify user's profile phone number with given token.
         """
         profile = self.get_object()
-        token = request.data.get('token')
+        token = request.data.get("token")
 
         if not token:
-            return Response('Invalid token.', status=status.HTTP_400_BAD_REQUEST)
+            return Response("Invalid token.", status=status.HTTP_400_BAD_REQUEST)
 
         verified, error_msgs = profile.verify(token=token)
 
         if verified:
-            return Response({'verified': verified}, status=status.HTTP_200_OK)
+            return Response({"verified": verified}, status=status.HTTP_200_OK)
         else:
             return Response(error_msgs, status=status.HTTP_400_BAD_REQUEST)
 

@@ -44,11 +44,7 @@ class Profile(TimeStampedModel):
     def verify(self, token=None):
         authy_api = AuthyApiClient(settings.ACCOUNT_SECURITY_API_KEY)
 
-        verification = authy_api.phones.verification_check(
-            self.phone,
-            self.country_code,
-            token
-        )
+        verification = authy_api.phones.verification_check(self.phone, self.country_code, token)
 
         if verification.ok():
             self.verified = True

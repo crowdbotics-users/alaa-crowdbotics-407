@@ -56,9 +56,7 @@ class SignupSerializer(serializers.ModelSerializer):
     def _start_phone_verification(user):
         authy_api = AuthyApiClient(settings.ACCOUNT_SECURITY_API_KEY)
         request = authy_api.phones.verification_start(
-            user.profile.phone,
-            user.profile.country_code,
-            via='sms'
+            user.profile.phone, user.profile.country_code, via="sms"
         )
         user.profile.verification_metadata = request.content
         user.profile.save()
