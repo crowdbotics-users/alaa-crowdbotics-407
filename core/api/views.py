@@ -3,12 +3,13 @@ from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from rest_auth.registration.views import SocialLoginView
 from rest_framework import status, permissions, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from core.accounts.models import Profile
-from core.api.permissions import IsOwner
+from core.api.permissions import IsOwnerOrReadOnly
 from core.api.serializers import (
     SignupSerializer,
     NotificationSerializer,
@@ -92,10 +93,34 @@ class UnfollowUser(APIView):
 
 
 class UserProfile(viewsets.ModelViewSet):
-    permission_classes = [IsOwner]
     serializer_class = UserProfileSerializer
+    permission_classes = [IsOwnerOrReadOnly]
     queryset = Profile.objects.all()
     lookup_field = "owner__username"
+
+    @action(
+        methods=["put"],
+        detail=True,
+        permission_classes=[IsOwnerOrReadOnly],
+        url_path="verify",
+        url_name="verify_number",
+    )
+    def confirm_phone(self, request, owner__username=None):
+        """
+        Verify user's profile phone number with given token.
+        """
+        profile = self.get_object()
+        token = request.data.get("token")
+
+        if not token:
+            return Response("Invalid token.", status=status.HTTP_400_BAD_REQUEST)
+
+        verified, error_msgs = profile.verify(token=token)
+
+        if verified:
+            return Response({"verified": verified}, status=status.HTTP_200_OK)
+        else:
+            return Response(error_msgs, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserFollowers(APIView):
