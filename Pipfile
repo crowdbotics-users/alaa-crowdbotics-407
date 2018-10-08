@@ -24,7 +24,6 @@ waitress = "*"
 whitenoise = "*"
 "boto3" = "*"
 django-storages = "*"
-"psycopg2" = "*"
 
 [dev-packages]
 ipdb = "*"
