@@ -20,6 +20,10 @@ django-rest-auth = "*"
 django-cors-headers = "*"
 authy = "*"
 phonenumbers = "*"
+waitress = "*"
+whitenoise = "*"
+"boto3" = "*"
+django-storages = "*"
 
 [dev-packages]
 ipdb = "*"
