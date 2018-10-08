@@ -1,4 +1,6 @@
 import phonenumbers
+from authy.api import AuthyApiClient
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from phonenumbers import NumberParseException
@@ -39,9 +41,9 @@ class SignupSerializer(serializers.ModelSerializer):
         try:
             full_number = phonenumbers.parse(full_number, None)
             if not phonenumbers.is_valid_number(full_number):
-                raise serializers.ValidationError("phone_number", "Invalid phone number")
+                raise serializers.ValidationError("Please input a valid phone number")
         except NumberParseException as e:
-            raise serializers.ValidationError("phone_number", e)
+            raise serializers.ValidationError(str(e))
         return phone_number
 
     def _create_user_profile(self, user, profile_data):
@@ -49,6 +51,15 @@ class SignupSerializer(serializers.ModelSerializer):
         profile.country_code = profile_data["country_code"]
         profile.phone = profile_data["phone"]
         profile.save()
+
+    @staticmethod
+    def _start_phone_verification(user):
+        authy_api = AuthyApiClient(settings.ACCOUNT_SECURITY_API_KEY)
+        request = authy_api.phones.verification_start(
+            user.profile.phone, user.profile.country_code, via="sms"
+        )
+        user.profile.verification_metadata = request.content
+        user.profile.save()
 
     @transaction.atomic
     def create(self, validated_data):
@@ -62,6 +73,7 @@ class SignupSerializer(serializers.ModelSerializer):
         user.save()
 
         self._create_user_profile(user, profile_data)
+        self._start_phone_verification(user)
         return user
 
 

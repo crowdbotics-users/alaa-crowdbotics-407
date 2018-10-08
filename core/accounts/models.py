@@ -1,3 +1,5 @@
+from authy.api import AuthyApiClient
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -22,6 +24,7 @@ class Profile(TimeStampedModel):
     country_code = models.CharField(max_length=5, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default=NOT_SPECIFIED)
     verified = models.BooleanField(default=False)
+    verification_metadata = models.TextField(blank=True)
     followers = models.ManyToManyField("self", symmetrical=False, blank=True)
     following = models.ManyToManyField(
         "self", symmetrical=False, blank=True, related_name="profiles"
@@ -37,6 +40,18 @@ class Profile(TimeStampedModel):
     @property
     def username(self):
         return self.owner.username
+
+    def verify(self, token=None):
+        authy_api = AuthyApiClient(settings.ACCOUNT_SECURITY_API_KEY)
+
+        verification = authy_api.phones.verification_check(self.phone, self.country_code, token)
+
+        if verification.ok():
+            self.verified = True
+            self.save()
+            return True, None  # verified, error_msg
+        else:
+            return False, verification.errors()
 
     @classmethod
     def create_profile(cls, user):

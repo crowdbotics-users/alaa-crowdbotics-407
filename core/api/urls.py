@@ -27,8 +27,8 @@ router.register("users/profile", api_views.UserProfile, base_name="user_profile"
 urlpatterns = [
     path("", include(router.urls)),
     path("token/", obtain_jwt_token),
-    path('token/refresh/', refresh_jwt_token),
-    path('token/verify/', verify_jwt_token),
+    path("token/refresh/", refresh_jwt_token),
+    path("token/verify/", verify_jwt_token),
     # Users
     path("users/explore/", api_views.ExploreUsers.as_view(), name="explore_users"),
     path(
