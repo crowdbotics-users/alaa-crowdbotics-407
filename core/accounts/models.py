@@ -53,19 +53,22 @@ class Profile(TimeStampedModel):
         else:
             return False, verification.errors()
 
+    def get_images(self, size=5):
+        return self.images.all().order_by('-created_at')[:size]
+
     @classmethod
     def create_profile(cls, user):
         profile = cls.objects.create(owner=user)
         return profile
 
-    # @property
-    # def post_count(self):
-    #     return self.images.all().count()
+    @property
+    def post_count(self):
+        return self.images.count()
 
     @property
     def followers_count(self):
-        return self.followers.all().count()
+        return self.followers.count()
 
     @property
     def following_count(self):
-        return self.following.all().count()
+        return self.following.count()

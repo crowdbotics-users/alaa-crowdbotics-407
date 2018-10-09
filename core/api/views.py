@@ -1,4 +1,6 @@
 # Create your views here.
+import itertools
+
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from rest_auth.registration.views import SocialLoginView
@@ -179,12 +181,12 @@ class ChangePassword(APIView):
 
 class Images(APIView):
     def get(self, request, format=None):
-        user = request.user
-        following_users = user.profile.following.all()
-        image_list = [following_user.images.all()[:5] for following_user in following_users]
-        image_list.extend(user.images.all()[:5])
-        sorted_list = sorted(image_list, key=lambda image: image.created_at, reverse=True)
-        serializer = ImageSerializer(sorted_list, many=True, context={"request": request})
+        user = request.user.profile
+        following_users = user.following.all()
+        following_users_list = [following_user.get_images() for following_user in following_users]
+        image_list = list(itertools.chain.from_iterable(following_users_list))
+        image_list.extend(user.get_images())
+        serializer = ImageSerializer(image_list, many=True, context={"request": request})
         return Response(serializer.data)
 
     def post(self, request, format=None):

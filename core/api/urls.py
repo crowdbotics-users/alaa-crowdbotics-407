@@ -32,7 +32,9 @@ urlpatterns = [
     # Users
     path("users/explore/", api_views.ExploreUsers.as_view(), name="explore_users"),
     path(
-        "users/<int:profile_id>/follow/", view=api_views.FollowUser.as_view(), name="follow_user"
+        "users/<int:profile_id>/follow/",
+        view=api_views.FollowUser.as_view(),
+        name="follow_user"
     ),
     path(
         "users/<int:profile_id>/unfollow/",
