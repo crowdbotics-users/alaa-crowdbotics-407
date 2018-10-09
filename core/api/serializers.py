@@ -2,6 +2,7 @@ import phonenumbers
 from authy.api import AuthyApiClient
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import GEOSGeometry
 from django.db import transaction
 from phonenumbers import NumberParseException
 from rest_framework import serializers
@@ -136,7 +137,8 @@ class SmallImageSerializer(serializers.ModelSerializer):
 class CountImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ("id", "file", "comment_count", "like_count")
+        fields = ("id", "file", "comments", "likes_count")
+        read_only_fields = ("comments", "likes_count")
 
 
 class FeedUserSerializer(serializers.ModelSerializer):
@@ -144,7 +146,7 @@ class FeedUserSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             "profile_image",
-            "owner__username",
+            "owner",
             "name",
             "bio",
             "website",
@@ -188,10 +190,12 @@ class ImageSerializer(TaggitSerializer, serializers.ModelSerializer):
             "restaurant",
             "dish",
             "comments",
-            "like_count",
-            "comment_count",
+            "likes_count",
+            "comments_count",
             "creator",
             "tags",
+            "latitude",
+            "longitude",
             "natural_time",
             "is_liked",
             "is_vertical",
@@ -210,7 +214,18 @@ class InputImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = ("file", "dish", "restaurant", "tags")
+        fields = ("file", "dish", "latitude", "longitude", "restaurant", "tags")
+
+    @staticmethod
+    def _get_point_object(obj):
+        point = f"POINT({obj.longitude} {obj.latitude})"
+        return GEOSGeometry(point)
+
+    def create(self, validated_data):
+        obj = super().create(validated_data)
+        obj.point = self._get_point_object(obj)
+        obj.save()
+        return obj
 
 
 class NotificationSerializer(serializers.ModelSerializer):

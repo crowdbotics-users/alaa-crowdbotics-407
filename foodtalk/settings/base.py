@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.sites",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
 ]
 
 LOCAL_APPS = ["core.api", "core.images", "core.accounts"]
@@ -100,8 +101,11 @@ WSGI_APPLICATION = "foodtalk.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-DATABASES = dict(default=dict(ENGINE="django.db.backends.sqlite3", NAME=os.path.join(BASE_DIR, "db.sqlite3")))
+DATABASES = dict(
+    default=dict(ENGINE="django.db.backends.sqlite3", NAME=os.path.join(BASE_DIR, "db.sqlite3"))
+)
 DATABASES["default"] = env.db()
+DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 
 
 # Password validation
@@ -133,7 +137,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # REST Framework
 REST_FRAMEWORK = {
@@ -148,9 +152,9 @@ REST_FRAMEWORK = {
 # MEDIA
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
-MEDIA_URL = '/media/'
+MEDIA_URL = "/media/"
 
 # Twilio
-ACCOUNT_SECURITY_API_KEY = os.environ.get('ACCOUNT_SECURITY_API_KEY', None)
+ACCOUNT_SECURITY_API_KEY = os.environ.get("ACCOUNT_SECURITY_API_KEY", None)

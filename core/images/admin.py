@@ -6,10 +6,6 @@ from . import models
 
 @admin.register(models.Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display_links = (
-        'restaurant',
-    )
-
     search_fields = (
         'restaurant',
         'dish',
@@ -21,8 +17,8 @@ class ImageAdmin(admin.ModelAdmin):
     )
 
     list_display = (
+        '__str__',
         'id',
-        'file',
         'restaurant',
         'dish',
         'creator',
