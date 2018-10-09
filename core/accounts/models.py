@@ -14,7 +14,9 @@ class Profile(TimeStampedModel):
     FEMALE = "F"
     NOT_SPECIFIED = "N"
 
-    GENDER_CHOICES = {(MALE, "Male"), (FEMALE, "Female"), (NOT_SPECIFIED, "Not specified")}
+    GENDER_CHOICES = (
+        (MALE, "Male"), (FEMALE, "Female"), (NOT_SPECIFIED, "Not specified")
+    )
 
     owner = models.OneToOneField(User, on_delete=models.PROTECT)
     profile_image = models.ImageField(null=True)
