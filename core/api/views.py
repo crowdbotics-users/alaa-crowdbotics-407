@@ -4,11 +4,12 @@ import itertools
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from rest_auth.registration.views import SocialLoginView
-from rest_framework import status, permissions, viewsets
+from rest_framework import status, permissions, viewsets, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from rest_framework_jwt.views import ObtainJSONWebToken
 
 from core.accounts.models import Profile
 from core.api.permissions import IsOwnerOrReadOnly
@@ -28,6 +29,14 @@ class SignupViewSet(ModelViewSet):
     permission_classes = [permissions.AllowAny]
     serializer_class = SignupSerializer
     http_method_names = ["post"]
+
+
+class CustomJWTTokenSignin(ObtainJSONWebToken):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_400_BAD_REQUEST:
+            response.status_code = status.HTTP_204_NO_CONTENT
+        return response
 
 
 class NotificationsView(APIView):
@@ -179,23 +188,31 @@ class ChangePassword(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class Images(APIView):
-    def get(self, request, format=None):
-        user = request.user.profile
+class ImagesViewSet(viewsets.ModelViewSet):
+    queryset = Image.objects.all()
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.method == 'POST':
+            return InputImageSerializer
+        return ImageSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def get_queryset(self):
+        user = self.request.user.profile
         following_users = user.following.all()
         following_users_list = [following_user.get_images() for following_user in following_users]
         image_list = list(itertools.chain.from_iterable(following_users_list))
         image_list.extend(user.get_images())
-        serializer = ImageSerializer(image_list, many=True, context={"request": request})
-        return Response(serializer.data)
+        return image_list
 
-    def post(self, request, format=None):
-        user = request.user
-        serializer = InputImageSerializer(data=request.data)
-
-        if serializer.is_valid(raise_exception=True):
-            serializer.save(creator=user.profile)
-            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user.profile)
+        return serializer
 
 
 class GenericImageView(APIView):

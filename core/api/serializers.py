@@ -178,7 +178,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class ImageSerializer(TaggitSerializer, serializers.ModelSerializer):
     comments = CommentSerializer(many=True)
-    creator = FeedUserSerializer()
+    creator = FeedUserSerializer(required=False)
     tags = TagListSerializerField()
     is_liked = serializers.SerializerMethodField()
 

@@ -15,18 +15,20 @@ Including another URLconf
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token, verify_jwt_token
+from rest_framework_jwt.views import refresh_jwt_token, verify_jwt_token
 
+from core.api.views import CustomJWTTokenSignin
 from . import views as api_views
 
 
 router = DefaultRouter()
 router.register("signup", api_views.SignupViewSet, base_name="signup")
 router.register("users/profile", api_views.UserProfile, base_name="user_profile")
+router.register("images", api_views.ImagesViewSet, base_name="images")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("token/", obtain_jwt_token),
+    path("token/", CustomJWTTokenSignin.as_view(), name='obtain_auth_token'),
     path("token/refresh/", refresh_jwt_token),
     path("token/verify/", verify_jwt_token),
     # Users
@@ -60,8 +62,7 @@ urlpatterns = [
     path("users/login/facebook/", view=api_views.FacebookLogin.as_view(), name="fb_login"),
     path("users/login/instagram/", view=api_views.InstagramLogin.as_view(), name="ig_login"),
     # Images
-    path("images/", view=api_views.Images.as_view(), name="images"),
-    path("<int:image_id>/", view=api_views.ImageDetail.as_view(), name="image_detail"),
+    # path("<int:image_id>/", view=api_views.ImageDetail.as_view(), name="image_detail"),
     path("<int:image_id>/likes/", view=api_views.LikeImage.as_view(), name="like_image"),
     path("<int:image_id>/unlikes/", view=api_views.UnlikeImage.as_view(), name="unlike_image"),
     path(

@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
+import datetime
 import os
 import environ
 
@@ -148,6 +148,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
 }
+JWT_AUTH = {
+    "JWT_EXPIRATION_DELTA": datetime.timedelta(seconds=600),
+    "JWT_REFRESH_EXPIRATION_DELTA": datetime.timedelta(days=7),
+}
 
 # MEDIA
 # ------------------------------------------------------------------------------
@@ -161,5 +165,5 @@ ACCOUNT_SECURITY_API_KEY = os.environ.get("ACCOUNT_SECURITY_API_KEY", None)
 
 SITE_ID = 1
 
-GDAL_LIBRARY_PATH = os.environ.get('GDAL_LIBRARY_PATH')
-GEOS_LIBRARY_PATH = os.environ.get('GEOS_LIBRARY_PATH')
+GDAL_LIBRARY_PATH = os.environ.get("GDAL_LIBRARY_PATH")
+GEOS_LIBRARY_PATH = os.environ.get("GEOS_LIBRARY_PATH")
