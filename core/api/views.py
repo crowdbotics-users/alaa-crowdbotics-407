@@ -3,9 +3,12 @@ import itertools
 
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
+from django.contrib.auth.models import User
 from rest_auth.registration.views import SocialLoginView
 from rest_framework import status, permissions, viewsets, parsers
 from rest_framework.decorators import action
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -39,6 +42,19 @@ class CustomJWTTokenSignin(ObtainJSONWebToken):
         return response
 
 
+class Logout(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    http_method_names = ["delete"]
+
+    def delete(self, request, format=None):
+        """
+        Remove all issued tokens to the logged user and finishes his session
+        """
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class NotificationsView(APIView):
     def get(self, request, format=None):
         user = request.user.profile
@@ -67,7 +83,7 @@ class ExploreUsers(APIView):
 
     def get(self, request, format=None):
         explore_list = []
-        last_five_images = Image.objects.all()[:10]
+        last_five_images = Image.objects.all()[:5]
 
         for image in last_five_images:
             if image.creator not in explore_list:
@@ -105,14 +121,14 @@ class UnfollowUser(APIView):
 
 class UserProfile(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly, IsAuthenticated]
     queryset = Profile.objects.all()
     lookup_field = "owner__username"
 
     @action(
         methods=["put"],
         detail=True,
-        permission_classes=[IsOwnerOrReadOnly],
+        permission_classes=[IsOwnerOrReadOnly, IsAuthenticated],
         url_path="verify",
         url_name="verify_number",
     )

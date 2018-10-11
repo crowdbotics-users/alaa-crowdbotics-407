@@ -31,6 +31,7 @@ urlpatterns = [
     path("token/", CustomJWTTokenSignin.as_view(), name='obtain_auth_token'),
     path("token/refresh/", refresh_jwt_token),
     path("token/verify/", verify_jwt_token),
+    path("logout/", api_views.Logout.as_view(), name='logout'),
     # Users
     path("users/explore/", api_views.ExploreUsers.as_view(), name="explore_users"),
     path(
