@@ -5,14 +5,14 @@ from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from django.contrib.auth.models import User
 from rest_auth.registration.views import SocialLoginView
-from rest_framework import status, permissions, viewsets, parsers
+from rest_framework import status, permissions, viewsets, parsers, serializers
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_jwt.views import ObtainJSONWebToken
 
 from core.accounts.models import Profile
 from core.api.permissions import IsOwnerOrReadOnly
@@ -34,11 +34,12 @@ class SignupViewSet(ModelViewSet):
     http_method_names = ["post"]
 
 
-class CustomJWTTokenSignin(ObtainJSONWebToken):
+class CustomJWTTokenSignin(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == status.HTTP_400_BAD_REQUEST:
-            response.status_code = status.HTTP_204_NO_CONTENT
+        try:
+            response = super().post(request, *args, **kwargs)
+        except serializers.ValidationError as e:
+            return Response(e.detail, status=status.HTTP_204_NO_CONTENT)
         return response
 
 
@@ -206,7 +207,7 @@ class ChangePassword(APIView):
 
 class ImagesViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.all()
-    permission_classes = [IsOwnerOrReadOnly]
+    permission_classes = [IsOwnerOrReadOnly, IsAuthenticated]
 
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method == 'POST':
