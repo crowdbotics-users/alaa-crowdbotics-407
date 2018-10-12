@@ -1,14 +1,17 @@
 # Create your views here.
-import itertools
 
 from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.instagram.views import InstagramOAuth2Adapter
 from django.contrib.auth.models import User
+
+from django.db.models import Count
+from rest_framework import filters
 from rest_auth.registration.views import SocialLoginView
-from rest_framework import status, permissions, viewsets, parsers, serializers
+from rest_framework import status, permissions, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,11 +39,7 @@ class SignupViewSet(ModelViewSet):
 
 class CustomJWTTokenSignin(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
-        try:
-            response = super().post(request, *args, **kwargs)
-        except serializers.ValidationError as e:
-            return Response(e.detail, status=status.HTTP_204_NO_CONTENT)
-        return response
+        return super().post(request, *args, **kwargs)
 
 
 class Logout(GenericAPIView):
@@ -205,9 +204,18 @@ class ChangePassword(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 12
+    page_size_query_param = 'page_size'
+    max_page_size = 12
+
+
 class ImagesViewSet(viewsets.ModelViewSet):
-    queryset = Image.objects.all()
+    queryset = Image.objects.annotate(num_likes=Count('likes'))
     permission_classes = [IsOwnerOrReadOnly, IsAuthenticated]
+    filter_backends = (filters.OrderingFilter,)
+    pagination_class = StandardResultsSetPagination
+    ordering = ['-num_likes']
 
     def get_serializer_class(self, *args, **kwargs):
         if self.request.method == 'POST':
@@ -220,12 +228,12 @@ class ImagesViewSet(viewsets.ModelViewSet):
         return context
 
     def get_queryset(self):
-        user = self.request.user.profile
-        following_users = user.following.all()
-        following_users_list = [following_user.get_images() for following_user in following_users]
-        image_list = list(itertools.chain.from_iterable(following_users_list))
-        image_list.extend(user.get_images())
-        return image_list
+        latitude = self.request.query_params.get('latitude')
+        longitude = self.request.query_params.get('longitude')
+        qs = super().get_queryset()
+        if latitude and longitude:
+            return qs.within(lat=latitude, long=longitude).order_by('distance')
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user.profile)
