@@ -2,4 +2,7 @@ from .base import *
 
 MIDDLEWARE += ["whitenoise.middleware.WhiteNoiseMiddleware"]
 ALLOWED_HOSTS = ["*"]
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+AWS_LOCATION = 'static'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+DEFAULT_FILE_STORAGE = 'alaa-crowdbotics-407.core.storage_backends.MediaStorage'
+STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)

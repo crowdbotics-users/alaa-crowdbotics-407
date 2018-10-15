@@ -25,6 +25,7 @@ whitenoise = "*"
 "boto3" = "*"
 django-storages = "*"
 "psycopg2" = "*"
+django-rest-swagger = "*"
 
 [dev-packages]
 ipdb = "*"

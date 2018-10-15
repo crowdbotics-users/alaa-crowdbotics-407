@@ -63,6 +63,8 @@ THIRD_PARTY_APPS = [
     "rest_auth.registration",  # enable registration
     "corsheaders",  # to accept requests from React
     "imagekit",
+    "rest_framework_swagger",
+    "storages"
 ]
 
 INSTALLED_APPS += LOCAL_APPS + THIRD_PARTY_APPS
@@ -168,3 +170,15 @@ SITE_ID = 1
 
 GDAL_LIBRARY_PATH = os.environ.get("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = os.environ.get("GEOS_LIBRARY_PATH")
+
+
+# Storage
+AWS_ACCESS_KEY_ID = 'AKIAJVPC7CTYFVRHJG2Q'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'foodtalk-staging'
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+AWS_S3_CUSTOM_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}"
+
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
