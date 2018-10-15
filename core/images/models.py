@@ -1,3 +1,6 @@
+import os
+import uuid
+
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
@@ -19,9 +22,18 @@ class ImageQuerySet(models.QuerySet):
             distance=Distance("point", ref_location))
 
 
+def post_image_path(instance, filename):
+    name, ext = os.path.splitext(filename)
+    name = f'{uuid.uuid4()}{ext}'
+    return 'images/{0}/{1}'.format(instance.creator.username, name)
+
+
 class Image(TimeStampedModel):
     """ Image Model """
-    file = ProcessedImageField(processors=[Transpose()], format="JPEG", options={"quality": 50})
+    file = ProcessedImageField(
+        processors=[Transpose()], format="JPEG", options={"quality": 50},
+        upload_to=post_image_path
+    )
     restaurant = models.TextField()
     dish = models.TextField()
     creator = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, related_name="images")
