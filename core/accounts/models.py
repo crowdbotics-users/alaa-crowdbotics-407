@@ -1,3 +1,5 @@
+import os
+
 from authy.api import AuthyApiClient
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -5,6 +7,12 @@ from django.db import models
 
 # Create your models here.
 from core.abstract_models import TimeStampedModel
+
+
+def get_profile_img_path(instance, filename):
+    name, ext = os.path.splitext(filename)
+    name = f'{uuid.uuid4()}{ext}'
+    return f'images/{instance.username}/{name}'
 
 
 class Profile(TimeStampedModel):
@@ -19,7 +27,7 @@ class Profile(TimeStampedModel):
     )
 
     owner = models.OneToOneField(User, on_delete=models.PROTECT)
-    profile_image = models.ImageField(null=True)
+    profile_image = models.ImageField(null=True, upload_to=get_profile_img_path)
     website = models.URLField(null=True)
     bio = models.TextField(null=True)
     phone = models.CharField(max_length=140, null=True)
