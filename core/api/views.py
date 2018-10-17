@@ -17,7 +17,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from core.accounts.models import Profile
-from core.api.pagination import StandardResultsSetPagination, PaginationAPIView
+from core.api.pagination import StandardResultsSetPagination
 from core.api.permissions import IsOwnerOrReadOnly
 from core.api.serializers import (
     SignupSerializer,
@@ -374,17 +374,14 @@ class ImageDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class FeedView(PaginationAPIView):
+class FeedView(ModelViewSet, StandardResultsSetPagination):
+    serializer_class = ImageSerializer
+    queryset = Image.objects.all()
     http_method_names = ['get']
 
-    def get(self, request):
-        profile = request.user.profile
+    def get_queryset(self):
+        qs = super().get_queryset()
+        profile = self.request.user.profile
         following_users_id = profile.following.values_list('id', flat=True)
-        queryset = Image.objects.filter(
-            creator__id__in=[following_users_id]).order_by('-created_at')
-        page = self.paginate_queryset(queryset)
+        return qs.filter(creator__id__in=[following_users_id]).order_by('-created_at')
 
-        serializer = ImageSerializer(queryset, many=True)
-        if page is not None:
-            return self.get_paginated_response(serializer.data)
-        return Response(serializer.data)

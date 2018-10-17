@@ -25,6 +25,7 @@ router = DefaultRouter()
 router.register("signup", api_views.SignupViewSet, base_name="signup")
 router.register("users/profile", api_views.UserProfile, base_name="user_profile")
 router.register("images", api_views.ImagesViewSet, base_name="images")
+router.register("feed", api_views.FeedView, base_name="feed"),
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -32,7 +33,7 @@ urlpatterns = [
     path("token/refresh/", refresh_jwt_token),
     path("token/verify/", verify_jwt_token),
     path("logout/", api_views.Logout.as_view(), name='logout'),
-    path("feed/", api_views.FeedView.as_view(), name="feed"),
+
     # Users
     path("users/explore/", api_views.ExploreUsers.as_view(), name="explore_users"),
     path(
