@@ -32,6 +32,7 @@ urlpatterns = [
     path("token/refresh/", refresh_jwt_token),
     path("token/verify/", verify_jwt_token),
     path("logout/", api_views.Logout.as_view(), name='logout'),
+    path("feed/", api_views.FeedView.as_view(), name="feed"),
     # Users
     path("users/explore/", api_views.ExploreUsers.as_view(), name="explore_users"),
     path(

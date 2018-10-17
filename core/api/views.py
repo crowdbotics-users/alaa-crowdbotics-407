@@ -11,13 +11,13 @@ from rest_framework import status, permissions, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
 from rest_framework.generics import GenericAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from core.accounts.models import Profile
+from core.api.pagination import StandardResultsSetPagination, PaginationAPIView
 from core.api.permissions import IsOwnerOrReadOnly
 from core.api.serializers import (
     SignupSerializer,
@@ -204,12 +204,6 @@ class ChangePassword(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 12
-    page_size_query_param = 'page_size'
-    max_page_size = 12
-
-
 class ImagesViewSet(viewsets.ModelViewSet):
     queryset = Image.objects.annotate(num_likes=Count('likes'))
     permission_classes = [IsOwnerOrReadOnly, IsAuthenticated]
@@ -378,3 +372,19 @@ class ImageDetail(APIView):
         image.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FeedView(PaginationAPIView):
+    http_method_names = ['get']
+
+    def get(self, request):
+        profile = request.user.profile
+        following_users_id = profile.following.values_list('id', flat=True)
+        queryset = Image.objects.filter(
+            creator__id__in=[following_users_id]).order_by('-created_at')
+        page = self.paginate_queryset(queryset)
+
+        serializer = ImageSerializer(queryset, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
