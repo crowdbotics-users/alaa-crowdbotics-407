@@ -375,8 +375,9 @@ class ImageDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class FeedView(ModelViewSet, StandardResultsSetPagination):
+class FeedView(ModelViewSet):
     serializer_class = ImageSerializer
+    pagination_class = StandardResultsSetPagination
     queryset = Image.objects.all()
     http_method_names = ['get']
 
@@ -384,5 +385,6 @@ class FeedView(ModelViewSet, StandardResultsSetPagination):
         qs = super().get_queryset()
         profile = self.request.user.profile
         following_users_id = profile.following.values_list('id', flat=True)
-        return qs.filter(creator__id__in=[following_users_id]).order_by('-created_at')
+        my_images = profile.images.all()
+        return qs.filter(creator__id__in=[following_users_id]).order_by('-created_at') | my_images
 
