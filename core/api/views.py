@@ -80,6 +80,7 @@ class InstagramLogin(SocialLoginView):
 
 class ExploreUsers(APIView):
     """ returns the 5 users which posted images recently """
+    http_method_names = ['get']
 
     def get(self, request, format=None):
         explore_list = []

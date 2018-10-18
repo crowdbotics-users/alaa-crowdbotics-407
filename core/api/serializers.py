@@ -123,7 +123,7 @@ class ListUserSerializer(serializers.ModelSerializer):
     def get_following(self, obj):
         if "request" in self.context:
             request = self.context["request"]
-            return obj in request.user.following.all()
+            return obj.id in request.user.profile.following.values_list('id', flat=True)
 
 
 class SmallImageSerializer(serializers.ModelSerializer):
